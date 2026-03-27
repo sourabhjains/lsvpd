@@ -86,7 +86,7 @@ pipeline {
                 }
                 
                 stages {
-                    stage('Build Container Image') {
+                    stage("Build Image - ${DISTRO}") {
                         steps {
                             script {
                                 echo "=========================================="
@@ -103,7 +103,7 @@ pipeline {
                         }
                     }
 
-                    stage('Run Build') {
+                    stage("Run Build - ${DISTRO}") {
                         steps {
                             script {
                                 echo "=========================================="
@@ -127,7 +127,7 @@ pipeline {
                         }
                     }
 
-                    stage('Archive Artifacts') {
+                    stage("Archive Artifacts - ${DISTRO}") {
                         steps {
                             script {
                                 echo "=========================================="
@@ -162,7 +162,7 @@ pipeline {
                         }
                     }
 
-                    stage('Cleanup Container') {
+                    stage("Cleanup - ${DISTRO}") {
                         steps {
                             script {
                                 echo "Cleaning up ${DISTRO} container image"
