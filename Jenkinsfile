@@ -12,12 +12,24 @@ pipeline {
         label 'ras_ci'
     }
 
+    triggers {
+        // Trigger on push to any branch
+        githubPush()
+    }
+
     environment {
         // Git commit information
         GIT_COMMIT_MSG = ''
         
         // Container runtime (auto-detected)
         CONTAINER_CMD = ''
+        
+        // PR information
+        IS_PR = "${env.CHANGE_ID != null ? 'true' : 'false'}"
+        PR_NUMBER = "${env.CHANGE_ID ?: 'N/A'}"
+        PR_TITLE = "${env.CHANGE_TITLE ?: 'N/A'}"
+        PR_AUTHOR = "${env.CHANGE_AUTHOR ?: 'N/A'}"
+        TARGET_BRANCH = "${env.CHANGE_TARGET ?: env.BRANCH_NAME}"
         
         // Credentials (loaded from Jenkins)
         GITHUB_TOKEN = credentials('github-token')
@@ -38,6 +50,17 @@ pipeline {
                     echo "=========================================="
                     echo "Initializing lsvpd CI/CD Pipeline"
                     echo "=========================================="
+                    
+                    // Display build type
+                    if (env.CHANGE_ID) {
+                        echo "Build Type: Pull Request"
+                        echo "PR Number: ${PR_NUMBER}"
+                        echo "PR Title: ${PR_TITLE}"
+                        echo "PR Author: ${PR_AUTHOR}"
+                        echo "Target Branch: ${TARGET_BRANCH}"
+                    } else {
+                        echo "Build Type: Push to ${env.BRANCH_NAME}"
+                    }
                     
                     // Get commit message
                     GIT_COMMIT_MSG = sh(
@@ -187,9 +210,14 @@ pipeline {
             
             script {
                 try {
+                    def prInfo = env.CHANGE_ID ? """
+*PR:* #${PR_NUMBER} - ${PR_TITLE}
+*Author:* ${PR_AUTHOR}
+*Target:* ${TARGET_BRANCH}""" : ""
+                    
                     def successMessage = """✅ *Build Successful* - lsvpd
 *Job:* ${env.JOB_NAME}
-*Build:* #${env.BUILD_NUMBER}
+*Build:* #${env.BUILD_NUMBER}${prInfo}
 *Commit:* ${GIT_COMMIT_MSG}
 *Distributions:* Fedora 37, Ubuntu 24.04
 *Duration:* ${currentBuild.durationString.replace(' and counting', '')}
@@ -225,9 +253,14 @@ pipeline {
             
             script {
                 try {
+                    def prInfo = env.CHANGE_ID ? """
+*PR:* #${PR_NUMBER} - ${PR_TITLE}
+*Author:* ${PR_AUTHOR}
+*Target:* ${TARGET_BRANCH}""" : ""
+                    
                     def failureMessage = """❌ *Build Failed* - lsvpd
 *Job:* ${env.JOB_NAME}
-*Build:* #${env.BUILD_NUMBER}
+*Build:* #${env.BUILD_NUMBER}${prInfo}
 *Commit:* ${GIT_COMMIT_MSG}
 *Failed Stage:* Check console output
 *Duration:* ${currentBuild.durationString.replace(' and counting', '')}
@@ -264,9 +297,14 @@ pipeline {
             
             script {
                 try {
+                    def prInfo = env.CHANGE_ID ? """
+*PR:* #${PR_NUMBER} - ${PR_TITLE}
+*Author:* ${PR_AUTHOR}
+*Target:* ${TARGET_BRANCH}""" : ""
+                    
                     def unstableMessage = """⚠️ *Build Unstable* - lsvpd
 *Job:* ${env.JOB_NAME}
-*Build:* #${env.BUILD_NUMBER}
+*Build:* #${env.BUILD_NUMBER}${prInfo}
 *Commit:* ${GIT_COMMIT_MSG}
 *Status:* Build completed with warnings
 *Duration:* ${currentBuild.durationString.replace(' and counting', '')}
