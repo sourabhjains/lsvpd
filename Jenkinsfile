@@ -184,6 +184,36 @@ pipeline {
             echo "Artifacts archived for:"
             echo "  - Fedora 37"
             echo "  - Ubuntu 24.04"
+            
+            script {
+                try {
+                    def successMessage = """✅ *Build Successful* - lsvpd
+*Job:* ${env.JOB_NAME}
+*Build:* #${env.BUILD_NUMBER}
+*Commit:* ${GIT_COMMIT_MSG}
+*Distributions:* Fedora 37, Ubuntu 24.04
+*Duration:* ${currentBuild.durationString.replace(' and counting', '')}
+*Details:* ${env.BUILD_URL}"""
+                    
+                    slackSend(
+                        color: 'good',
+                        channel: 'C034F2650KC',
+                        tokenCredentialId: 'btassslackToken',
+                        teamDomain: 'ibm-systems-power',
+                        message: successMessage
+                    )
+                    
+                    // Upload build info file
+                    slackUploadFile(
+                        filePath: 'build-info.txt',
+                        initialComment: 'Build information and logs',
+                        channel: 'C034F2650KC',
+                        credentialId: 'btassslackToken'
+                    )
+                } catch (Exception e) {
+                    echo "Warning: Could not send Slack notification: ${e.message}"
+                }
+            }
         }
         
         failure {
@@ -192,6 +222,38 @@ pipeline {
             echo "=========================================="
             echo "Check build logs for details"
             echo "Commit: ${GIT_COMMIT_MSG}"
+            
+            script {
+                try {
+                    def failureMessage = """❌ *Build Failed* - lsvpd
+*Job:* ${env.JOB_NAME}
+*Build:* #${env.BUILD_NUMBER}
+*Commit:* ${GIT_COMMIT_MSG}
+*Failed Stage:* Check console output
+*Duration:* ${currentBuild.durationString.replace(' and counting', '')}
+*Details:* ${env.BUILD_URL}console"""
+                    
+                    slackSend(
+                        color: 'danger',
+                        channel: 'C034F2650KC',
+                        tokenCredentialId: 'btassslackToken',
+                        teamDomain: 'ibm-systems-power',
+                        message: failureMessage
+                    )
+                    
+                    // Upload build info file if it exists
+                    if (fileExists('build-info.txt')) {
+                        slackUploadFile(
+                            filePath: 'build-info.txt',
+                            initialComment: 'Build failure information',
+                            channel: 'C034F2650KC',
+                            credentialId: 'btassslackToken'
+                        )
+                    }
+                } catch (Exception e) {
+                    echo "Warning: Could not send Slack notification: ${e.message}"
+                }
+            }
         }
         
         unstable {
@@ -199,6 +261,38 @@ pipeline {
             echo "Pipeline unstable"
             echo "=========================================="
             echo "Some builds may have warnings"
+            
+            script {
+                try {
+                    def unstableMessage = """⚠️ *Build Unstable* - lsvpd
+*Job:* ${env.JOB_NAME}
+*Build:* #${env.BUILD_NUMBER}
+*Commit:* ${GIT_COMMIT_MSG}
+*Status:* Build completed with warnings
+*Duration:* ${currentBuild.durationString.replace(' and counting', '')}
+*Details:* ${env.BUILD_URL}"""
+                    
+                    slackSend(
+                        color: 'warning',
+                        channel: 'C034F2650KC',
+                        tokenCredentialId: 'btassslackToken',
+                        teamDomain: 'ibm-systems-power',
+                        message: unstableMessage
+                    )
+                    
+                    // Upload build info file
+                    if (fileExists('build-info.txt')) {
+                        slackUploadFile(
+                            filePath: 'build-info.txt',
+                            initialComment: 'Build warning information',
+                            channel: 'C034F2650KC',
+                            credentialId: 'btassslackToken'
+                        )
+                    }
+                } catch (Exception e) {
+                    echo "Warning: Could not send Slack notification: ${e.message}"
+                }
+            }
         }
         
         always {
