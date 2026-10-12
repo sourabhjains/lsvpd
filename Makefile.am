@@ -11,7 +11,8 @@ update_h_files = src/include/device.hpp \
 		src/include/rtascollector.hpp \
 		src/include/sysfstreecollector.hpp
 
-AM_CPPFLAGS = -I./src/include -Wall -fstack-protector-all -Wstack-protector
+AM_CPPFLAGS = -I./src/include -Wall -fstack-protector-all -Wstack-protector \
+	      $(FORTIFY_CFLAGS)
 ACLOCAL_AMFLAGS = -I m4
 
 sbin_PROGRAMS = vpdupdate lsvpd lscfg lsvio lsmcode

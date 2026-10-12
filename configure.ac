@@ -22,6 +22,20 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
+dnl Enable _FORTIFY_SOURCE only when optimization is enabled
+AC_MSG_CHECKING([whether optimization is enabled])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[]], [[
+# ifndef __OPTIMIZE__
+# error Compiler optimization is disabled
+# endif
+  ]])],
+  [FORTIFY_CFLAGS="-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3"
+   AC_MSG_RESULT([yes, using $FORTIFY_CFLAGS])],
+  [FORTIFY_CFLAGS=""
+   AC_MSG_RESULT([no, _FORTIFY_SOURCE disabled])])
+AC_SUBST([FORTIFY_CFLAGS])
+
 AC_COMPILE_IFELSE(
 		  [AC_LANG_PROGRAM([int i;])],
 		  [],
